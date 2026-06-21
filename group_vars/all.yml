@@ -1,0 +1,5 @@
+frontend_port: 80
+container_name: frontend
+
+project_name: "Projekt 2"
+subtitle: "Docker Deployment mit Ansible"
