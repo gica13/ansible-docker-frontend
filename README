@@ -1,1 +1,247 @@
+# docker-ansible-frontend
+
+## Projekt 2 – Automatisation mit Ansible
+
+### Projektbeschreibung
+
+Dieses Projekt automatisiert die Bereitstellung einer Docker-basierten Webanwendung mit Ansible.
+
+Ein Ansible-Controller verwaltet einen Debian Managed Host über SSH mittels Public-Key-Authentifizierung. Über ein Playbook wird Docker automatisch installiert und ein Nginx-Webserver als Container gestartet. Die Webseite wird anschliessend über HTTP bereitgestellt.
+
+Die gesamte Infrastruktur ist reproduzierbar und kann jederzeit durch erneutes Ausführen des Ansible-Playbooks neu erstellt werden.
+
+---
+
+# Infrastruktur
+
+| VM  | Hostname           | Rolle                   | IP-Adresse    |
+| --- | ------------------ | ----------------------- | ------------- |
+| VM1 | ansible-controller | Ansible Controller      | 192.168.200.5 |
+| VM2 | docker-server      | Docker Host / Webserver | 192.168.200.6 |
+
+---
+
+# Netzwerk
+
+Beide virtuellen Maschinen befinden sich im selben Netzwerksegment.
+
+```text
+Netzwerk: 192.168.200.0/24
+
+ansible-controller  192.168.200.5
+docker-server       192.168.200.6
+```
+
+---
+
+# Architektur
+
+```text
++----------------------------------+
+| VM1                              |
+| Hostname: ansible-controller     |
+| Rolle: Ansible Controller        |
+| IP: 192.168.200.5                |
++---------------+------------------+
+                |
+                |
+                | SSH + Public Key
+                | Ansible
+                |
+                v
+
++----------------------------------+
+| VM2                              |
+| Hostname: docker-server          |
+| Rolle: Managed Host              |
+| IP: 192.168.200.6                |
++---------------+------------------+
+                |
+                |
+                | Docker Engine
+                |
+                v
+
++----------------------------------+
+| Nginx Container                  |
+| Port 80                          |
+| HTTP Frontend                    |
++---------------+------------------+
+                |
+                v
+
+http://192.168.200.6
+```
+
+---
+
+# SSH-Konfiguration
+
+Die Verbindung zwischen dem Ansible Controller und dem Managed Host erfolgt ausschliesslich über SSH Public Keys.
+
+### SSH-Test
+
+Vom Controller:
+
+```bash
+ssh root@192.168.200.6
+```
+
+Erwartetes Resultat:
+
+```text
+root@docker-server:~#
+```
+
+Damit ist die Anforderung erfüllt:
+
+> Controller host muss Zugang haben zu allen managed hosts im Inventar über ssh, zugang mit root+pubkey oder sudo+pubkey
+
+---
+
+# Projektstruktur
+
+```text
+projekt2/
+│
+├── inventory.ini
+├── playbook.yml
+│
+├── group_vars/
+│   └── all.yml
+│
+└── roles/
+    └── docker_frontend/
+        ├── tasks/
+        │   └── main.yml
+        │
+        └── templates/
+            └── index.html.j2
+```
+
+---
+
+# Beschreibung der Dateien
+
+| Datei                                         | Beschreibung                                 |
+| --------------------------------------------- | -------------------------------------------- |
+| inventory.ini                                 | Enthält den Managed Host docker-server       |
+| playbook.yml                                  | Haupt-Playbook                               |
+| group_vars/all.yml                            | Enthält globale Variablen                    |
+| roles/docker_frontend/tasks/main.yml          | Installiert Docker und startet den Container |
+| roles/docker_frontend/templates/index.html.j2 | Template für die Webseite                    |
+
+---
+
+# Inventory
+
+```ini
+[webservers]
+dockerhost ansible_host=192.168.200.6 ansible_user=root
+```
+
+---
+
+# Variablen
+
+Datei:
+
+```text
+group_vars/all.yml
+```
+
+Inhalt:
+
+```yaml
+frontend_port: 80
+container_name: frontend
+```
+
+---
+
+# Verbindungstest
+
+Vom Controller:
+
+```bash
+ansible all -i inventory.ini -m ping
+```
+
+Ergebnis:
+
+```json
+dockerhost | SUCCESS => {
+    "ping": "pong"
+}
+```
+
+Damit wurde die erfolgreiche Verbindung zwischen Controller und Managed Host nachgewiesen.
+
+---
+
+# Deployment
+
+Deployment starten:
+
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+Das Playbook führt automatisch folgende Schritte aus:
+
+1. Docker installieren
+2. Docker aktivieren und starten
+3. Verzeichnis für die Webseite erstellen
+4. HTML-Datei bereitstellen
+5. Nginx Container starten
+6. HTTP-Port veröffentlichen
+
+---
+
+# Docker-Test
+
+Auf dem Managed Host:
+
+```bash
+docker ps
+```
+
+Beispiel:
+
+```text
+CONTAINER ID   IMAGE          STATUS
+xxxxxxxxxxxx   nginx:latest   Up
+```
+
+---
+
+# Test der Webseite
+
+Von der Controller-VM:
+
+```bash
+curl http://192.168.200.6
+```
+
+oder im Browser:
+
+```text
+http://192.168.200.6
+```
+
+---
+
+# Ziel des Projektes
+
+Das Ziel des Projektes besteht darin, die automatische Konfiguration eines Linux-Servers mittels Ansible zu demonstrieren.
+
+Dabei werden folgende Technologien eingesetzt:
+
+* Debian Linux
+* Ansible
+* SSH Public-Key Authentication
+* Docker
+* Nginx
+* Git / GitHub
+
 
