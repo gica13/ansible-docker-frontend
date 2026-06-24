@@ -72,7 +72,34 @@ projekt2/
         └── templates/
             └── index.html.j2
 ```
+---
 
+
+## Zugriff auf die Systeme
+
+### Ansible Controller
+
+Verbindung zum Controller Host:
+
+```bash
+ssh root@DyDNS-Hostname
+```
+
+### Verbindung auf Docker Host über den Controller
+
+Vom Ansible Controller aus kann auf den Docker Host zugegriffen werden:
+
+```bash
+ssh root@192.168.200.6
+```
+
+### Webanwendung
+
+Die bereitgestellte Webanwendung ist über HTTP erreichbar:
+
+```text
+http://192.168.200.6 oder curl http://192.168.200.6
+```
 ---
 
 ## Inventory
