@@ -1,0 +1,42 @@
+---
+- name: Docker installieren
+  apt:
+    name:
+      - docker.io
+      - python3-pip
+    state: present
+    update_cache: yes
+
+- name: Docker Python SDK
+  pip:
+    name: docker
+    break_system_packages: true
+
+- name: Docker starten
+  service:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Frontend Verzeichnis
+  file:
+    path: /opt/frontend
+    state: directory
+
+- name: index.html aus Template erzeugen
+  template:
+    src: index.html.j2
+    dest: /opt/frontend/index.html
+
+- name: Nginx Container starten
+  community.docker.docker_container:
+    name: "{{ container_name }}"
+    image: nginx:latest
+    state: started
+    restart_policy: always
+
+    published_ports:
+      - "{{ frontend_port }}:80"
+
+    volumes:
+      - /opt/frontend/index.html:/usr/share/nginx/html/index.html:ro
